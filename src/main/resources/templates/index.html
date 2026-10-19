@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard Global')}">
+    <title>AutoTrace - Dashboard</title>
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: navbar('dashboard')}"></header>
+
+<main class="container-fluid px-4 py-4">
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div th:if="${dbWarning}" class="alert alert-warning alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <span th:text="${dbWarning}">Aviso de base de datos</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Hero Banner -->
+    <div class="card-custom p-4 p-md-5 mb-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 6px solid #2563eb;">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-primary px-3 py-2 rounded-pill mb-2 text-uppercase fw-semibold" style="letter-spacing: 0.08em;">
+                    <i class="bi bi-diagram-3-fill me-1"></i> Arquitectura Empresarial de Microservicios
+                </span>
+                <h1 class="display-6 fw-bold mb-3">Sistema de Gestión, Control y Trazabilidad de Taller Automotriz</h1>
+                <p class="lead text-light text-opacity-75 mb-4">
+                    Plataforma integral basada en <strong>Spring Boot</strong> y <strong>Spring Data MongoDB</strong> con el patrón <em>"Database-per-Service"</em>. 
+                    Garantiza la trazabilidad end-to-end de vehículos, diagnósticos, órdenes de trabajo, suministro de repuestos mayoristas y auditorías de calidad ISO.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-dark border border-secondary text-info p-2"><i class="bi bi-hdd-network"></i> Database-per-Service</span>
+                    <span class="badge bg-dark border border-secondary text-success p-2"><i class="bi bi-database"></i> MongoDB NoSQL</span>
+                    <span class="badge bg-dark border border-secondary text-warning p-2"><i class="bi bi-lightning-charge"></i> RESTful API + OpenAPI</span>
+                    <span class="badge bg-dark border border-secondary text-primary p-2"><i class="bi bi-cloud-arrow-up"></i> Render Ready</span>
+                </div>
+            </div>
+            <div class="col-lg-4 mt-4 mt-lg-0 text-center">
+                <div class="p-3 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-10 backdrop-blur">
+                    <h5 class="text-info fw-bold mb-2"><i class="bi bi-cpu-fill"></i> Estado de Microservicios</h5>
+                    <ul class="list-unstyled text-start small mb-0">
+                        <li class="py-1 border-bottom border-white border-opacity-10 d-flex justify-content-between">
+                            <span><i class="bi bi-shield-check text-success me-1"></i> Servicio Admin & Usuarios:</span>
+                            <span class="badge bg-success bg-opacity-25 text-success">taller_admin_db</span>
+                        </li>
+                        <li class="py-1 border-bottom border-white border-opacity-10 d-flex justify-content-between">
+                            <span><i class="bi bi-car-front text-info me-1"></i> Servicio Vehículos & Clientes:</span>
+                            <span class="badge bg-info bg-opacity-25 text-info">taller_clientes_db</span>
+                        </li>
+                        <li class="py-1 border-bottom border-white border-opacity-10 d-flex justify-content-between">
+                            <span><i class="bi bi-tools text-warning me-1"></i> Servicio Órdenes & Trazabilidad:</span>
+                            <span class="badge bg-warning bg-opacity-25 text-warning">taller_ordenes_db</span>
+                        </li>
+                        <li class="py-1 border-bottom border-white border-opacity-10 d-flex justify-content-between">
+                            <span><i class="bi bi-truck text-primary me-1"></i> Servicio Proveedores & Stock:</span>
+                            <span class="badge bg-primary bg-opacity-25 text-primary">taller_proveedores_db</span>
+                        </li>
+                        <li class="py-1 d-flex justify-content-between">
+                            <span><i class="bi bi-award text-light me-1"></i> Servicio Certificaciones ISO:</span>
+                            <span class="badge bg-secondary bg-opacity-50 text-light">taller_certificaciones_db</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Widgets -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card-custom p-3 stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small fw-semibold">Usuarios</span>
+                    <i class="bi bi-people text-primary fs-5"></i>
+                </div>
+                <h3 class="fw-bold mb-0" th:text="${totalUsuarios != null ? totalUsuarios : 0}">0</h3>
+                <small class="text-success"><i class="bi bi-check2"></i> 5 Roles activos</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card-custom p-3" style="border-left: 4px solid #06b6d4;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small fw-semibold">Vehículos</span>
+                    <i class="bi bi-car-front text-info fs-5"></i>
+                </div>
+                <h3 class="fw-bold mb-0" th:text="${totalVehiculos != null ? totalVehiculos : 0}">0</h3>
+                <small class="text-muted">En base de datos</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card-custom p-3" style="border-left: 4px solid #f59e0b;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small fw-semibold">Órdenes Trabajo</span>
+                    <i class="bi bi-wrench text-warning fs-5"></i>
+                </div>
+                <h3 class="fw-bold mb-0" th:text="${totalOrdenes != null ? totalOrdenes : 0}">0</h3>
+                <small class="text-muted">Con trazabilidad</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card-custom p-3" style="border-left: 4px solid #10b981;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small fw-semibold">Cotizaciones</span>
+                    <i class="bi bi-receipt text-success fs-5"></i>
+                </div>
+                <h3 class="fw-bold mb-0" th:text="${totalCotizaciones != null ? totalCotizaciones : 0}">0</h3>
+                <small class="text-muted">Presupuestos</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card-custom p-3" style="border-left: 4px solid #8b5cf6;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small fw-semibold">Reabastecimiento</span>
+                    <i class="bi bi-box-seam text-purple fs-5" style="color: #8b5cf6;"></i>
+                </div>
+                <h3 class="fw-bold mb-0" th:text="${totalPedidos != null ? totalPedidos : 0}">0</h3>
+                <small class="text-muted">A proveedores</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2">
+            <div class="card-custom p-3" style="border-left: 4px solid #ec4899;">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="text-muted small fw-semibold">Certificados</span>
+                    <i class="bi bi-patch-check-fill text-pink fs-5" style="color: #ec4899;"></i>
+                </div>
+                <h3 class="fw-bold mb-0" th:text="${totalCertificaciones != null ? totalCertificaciones : 0}">0</h3>
+                <small class="text-success"><i class="bi bi-shield-lock"></i> Con hash SHA-256</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulos / Roles Grid -->
+    <h4 class="fw-bold mb-3"><i class="bi bi-grid-fill text-primary me-2"></i>Portales y Roles Empresariales</h4>
+    <div class="row g-4 mb-5">
+        
+        <!-- Rol 1: Admin -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-custom h-100 p-4 border-top border-4 border-danger">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-3 fs-3">
+                        <i class="bi bi-shield-shaded"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Administrador del Taller</h5>
+                        <small class="text-muted">Gestión de Catálogos y Usuarios</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Control centralizado con operaciones CRUD: administración de usuarios, asignación de roles, catálogo maestro de servicios con tarifas y catálogo de repuestos con alertas de stock mínimo.
+                </p>
+                <div class="mt-auto">
+                    <a th:href="@{/web/admin}" class="btn btn-outline-danger w-100 fw-semibold rounded-pill">
+                        Acceder a Panel Admin <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rol 2: Mecánico -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-custom h-100 p-4 border-top border-4 border-warning">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="p-3 bg-warning bg-opacity-10 text-warning rounded-3 fs-3">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Mecánico de Taller</h5>
+                        <small class="text-muted">Ejecución y Trazabilidad Operativa</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Consulta órdenes de trabajo asignadas, registra diagnósticos técnicos detallados, documenta reparaciones realizadas, descuenta repuestos utilizados del inventario y computa tiempos de servicio en horas/minutos.
+                </p>
+                <div class="mt-auto">
+                    <a th:href="@{/web/mecanico}" class="btn btn-outline-warning w-100 fw-semibold rounded-pill text-dark">
+                        Acceder a Panel Mecánico <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rol 3: Cliente -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-custom h-100 p-4 border-top border-4 border-primary">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3 fs-3">
+                        <i class="bi bi-person-heart"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Cliente Propietario</h5>
+                        <small class="text-muted">Mis Vehículos y Cotizaciones</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Registra sus vehículos con placa y kilometraje, consulta la hoja de vida / historial clínico de mantenimiento con trazabilidad paso a paso, y aprueba o rechaza cotizaciones con un solo clic.
+                </p>
+                <div class="mt-auto">
+                    <a th:href="@{/web/cliente}" class="btn btn-outline-primary w-100 fw-semibold rounded-pill">
+                        Acceder a Portal Cliente <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rol 4: Proveedor -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-custom h-100 p-4 border-top border-4 border-success">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="p-3 bg-success bg-opacity-10 text-success rounded-3 fs-3">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Proveedor de Repuestos</h5>
+                        <small class="text-muted">Cadena de Suministro y Entregas</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Administra el catálogo e inventario mayorista de suministros, atiende pedidos automáticos de reabastecimiento generados por el taller y registra despachos con transportadora, número de guía y confirmación de entrega.
+                </p>
+                <div class="mt-auto">
+                    <a th:href="@{/web/proveedor}" class="btn btn-outline-success w-100 fw-semibold rounded-pill">
+                        Acceder a Portal Proveedor <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rol 5: Certificador / Auditor -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-custom h-100 p-4 border-top border-4 border-info">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="p-3 bg-info bg-opacity-10 text-info rounded-3 fs-3">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Certificador o Auditor</h5>
+                        <small class="text-muted">Control de Calidad ISO y Trazabilidad</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Inspecciona servicios culminados contra un checklist de 6 normas de calidad y seguridad vehicular (frenos, torque, fluidos, OBD-II). Emite Certificados Oficiales de Calidad con hash inmutable SHA-256.
+                </p>
+                <div class="mt-auto">
+                    <a th:href="@{/web/auditor}" class="btn btn-outline-info w-100 fw-semibold rounded-pill">
+                        Acceder a Panel Auditor <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Docs Card -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card-custom h-100 p-4 border-top border-4 border-dark bg-light">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="p-3 bg-dark text-white rounded-3 fs-3">
+                        <i class="bi bi-code-slash"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Documentación OpenAPI</h5>
+                        <small class="text-muted">Swagger UI & Endpoints REST</small>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Endpoints RESTful desacoplados y documentados para integración móvil o B2B: 
+                    <code>/api/v1/admin/*</code>, <code>/api/v1/vehiculos/*</code>, <code>/api/v1/ordenes/*</code>, <code>/api/v1/proveedores/*</code>, <code>/api/v1/certificaciones/*</code>.
+                </p>
+                <div class="mt-auto">
+                    <a th:href="@{/swagger-ui.html}" target="_blank" class="btn btn-dark w-100 fw-semibold rounded-pill">
+                        Abrir Swagger UI <i class="bi bi-box-arrow-up-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablas Rápidas de Trazabilidad Reciente -->
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card-custom p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-warning me-2"></i>Últimas Órdenes de Trabajo en Curso</h5>
+                    <a th:href="@{/web/mecanico}" class="btn btn-sm btn-link text-decoration-none">Ver todas &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Orden</th>
+                                <th>Vehículo / Placa</th>
+                                <th>Mecánico</th>
+                                <th>Estado</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="o : ${ultimasOrdenes}">
+                                <td class="fw-bold text-primary" th:text="${o.numeroOrden}">OT-001</td>
+                                <td>
+                                    <span class="badge bg-dark" th:text="${o.vehiculoPlaca}">ABC-123</span>
+                                    <small class="d-block text-muted" th:text="${o.vehiculoMarcaModelo}">Mazda 3</small>
+                                </td>
+                                <td th:text="${o.mecanicoNombre}">Carlos M.</td>
+                                <td>
+                                    <span class="badge badge-status"
+                                          th:classappend="${o.estado.name() == 'COMPLETADA' || o.estado.name() == 'CERTIFICADA' ? 'bg-success' : (o.estado.name() == 'EN_REPARACION' ? 'bg-warning text-dark' : 'bg-secondary')}"
+                                          th:text="${o.estado}">ESTADO</span>
+                                </td>
+                                <td class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(o.costoTotal, 0, 'COMMA', 0, 'POINT')}">$0</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(ultimasOrdenes)}">
+                                <td colspan="5" class="text-center text-muted py-3">No hay órdenes registradas aún.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card-custom p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-shield-check text-success me-2"></i>Últimas Certificaciones Emitidas</h5>
+                    <a th:href="@{/web/auditor}" class="btn btn-sm btn-link text-decoration-none">Ver todas &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Placa</th>
+                                <th>Puntaje</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${ultimasCertificaciones}">
+                                <td class="fw-bold text-success" th:text="${c.codigoCertificado}">CERT-001</td>
+                                <td><span class="badge bg-secondary" th:text="${c.vehiculoPlaca}">ABC-123</span></td>
+                                <td>
+                                    <span class="badge bg-success" th:text="${c.puntajeCalidad} + '%'">100%</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{'/web/auditor/certificado/' + ${c.id}}" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill">
+                                        <i class="bi bi-file-earmark-check"></i> Ver
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(ultimasCertificaciones)}">
+                                <td colspan="4" class="text-center text-muted py-3">No hay certificados emitidos aún.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

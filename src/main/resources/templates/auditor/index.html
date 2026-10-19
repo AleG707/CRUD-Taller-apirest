@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel Auditor')}">
+    <title>AutoTrace - Panel Auditor / Certificador</title>
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: navbar('auditor')}"></header>
+
+<main class="container-fluid px-4 py-4">
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-award-fill text-purple me-2" style="color: #6366f1;"></i>Panel del Certificador o Auditor de Calidad</h2>
+            <p class="text-muted mb-0">Validación de cumplimiento de normas de calidad (ISO 9001) y seguridad vial mediante la trazabilidad técnica del servicio</p>
+        </div>
+        <span class="badge bg-purple bg-opacity-10 text-white border border-secondary px-3 py-2 fs-6 rounded-pill" style="background-color: #4f46e5;">
+            <i class="bi bi-database me-1"></i> BD: taller_certificaciones_db
+        </span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'certificados' ? 'active text-white' : 'bg-white border'}"
+               style="background-color: #4f46e5;" th:href="@{/web/auditor?tab=certificados}">
+                <i class="bi bi-patch-check-fill me-1"></i> Certificados de Calidad Emitidos
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'auditar' ? 'active text-white' : 'bg-white border'}"
+               th:href="@{/web/auditor?tab=auditar}">
+                <i class="bi bi-clipboard-check me-1"></i> Auditar Órdenes de Trabajo Culminadas
+            </a>
+        </li>
+    </ul>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: CERTIFICADOS EMITIDOS -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'certificados'}">
+        <div class="card-custom p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-award text-primary me-2"></i>Certificaciones Registradas con Trazabilidad Inmutable</h5>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Código Certificado</th>
+                            <th>Orden / Placa</th>
+                            <th>Mecánico</th>
+                            <th>Auditor Certificador</th>
+                            <th>Puntaje Calidad</th>
+                            <th>Resultado</th>
+                            <th>Hash SHA-256</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${certificados}">
+                            <td class="fw-bold text-primary" th:text="${c.codigoCertificado}">CERT-001</td>
+                            <td>
+                                <strong th:text="${c.numeroOrden}">OT-001</strong>
+                                <span class="badge bg-dark ms-1" th:text="${c.vehiculoPlaca}">ABC-123</span>
+                            </td>
+                            <td th:text="${c.mecanicoNombre}">Carlos M.</td>
+                            <td th:text="${c.auditorNombre}">Ing. Laura</td>
+                            <td>
+                                <span class="badge bg-success fs-6" th:text="${c.puntajeCalidad} + '%'">100%</span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${c.resultado.name() == 'APROBADO' ? 'bg-success' : (c.resultado.name() == 'APROBADO_CON_OBSERVACIONES' ? 'bg-warning text-dark' : 'bg-danger')}"
+                                      th:text="${c.resultado}">APROBADO</span>
+                            </td>
+                            <td>
+                                <small class="font-monospace text-muted text-truncate d-inline-block" style="max-width: 140px;" th:text="${c.hashTrazabilidad}">hash</small>
+                            </td>
+                            <td>
+                                <a th:href="@{'/web/auditor/certificado/' + ${c.id}}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                    <i class="bi bi-file-earmark-check me-1"></i> Ver Certificado
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(certificados)}">
+                            <td colspan="8" class="text-center text-muted py-3">No hay certificaciones emitidas aún.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: AUDITAR ÓRDENES DE TRABAJO -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'auditar'}">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-clipboard2-check-fill text-primary me-2"></i>Formulario de Auditoría Técnica</h5>
+                    <form th:action="@{/web/auditor/certificar}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Seleccionar Orden de Trabajo para Auditar</label>
+                            <select name="ordenTrabajoId" class="form-select" required>
+                                <option value="" disabled selected>Seleccione orden...</option>
+                                <option th:each="ord : ${ordenesParaAuditar}" th:value="${ord.id}"
+                                        th:text="${ord.numeroOrden} + ' - Placa: ' + ${ord.vehiculoPlaca} + ' (' + ${ord.estado} + ')'"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nombre del Auditor / Certificador</label>
+                            <input type="text" name="auditorNombre" class="form-control" value="Ing. Laura Auditora (Certificadora ISO)" required>
+                        </div>
+
+                        <!-- Checklist de Normas -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold d-block">Normas de Calidad y Seguridad a Validar:</label>
+                            <div class="border rounded-3 p-3 bg-light">
+                                <div class="form-check mb-2" th:each="item : ${checklistEstandar}">
+                                    <input class="form-check-input" type="checkbox" name="normasCumplidas" th:value="${item.norma}" th:id="'check_' + ${itemStat.index}" checked>
+                                    <label class="form-check-label small" th:for="'check_' + ${itemStat.index}">
+                                        <strong th:text="${item.norma}">Norma</strong>
+                                        <small class="d-block text-muted" th:text="${item.descripcion}">Descripción</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Observaciones y Dictamen del Auditor</label>
+                            <textarea name="observaciones" class="form-control" rows="3" placeholder="Dictamen técnico final de conformidad..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">
+                            <i class="bi bi-patch-check-fill me-1"></i> Validar Auditoría y Emitir Certificado
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-primary me-2"></i>Órdenes de Trabajo Disponibles para Auditoría</h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Orden</th>
+                                    <th>Placa</th>
+                                    <th>Mecánico</th>
+                                    <th>Estado Actual</th>
+                                    <th>Repuestos / Horas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="ord : ${ordenesParaAuditar}">
+                                    <td class="fw-bold text-primary" th:text="${ord.numeroOrden}">OT-001</td>
+                                    <td>
+                                        <span class="badge bg-dark" th:text="${ord.vehiculoPlaca}">ABC-123</span>
+                                    </td>
+                                    <td th:text="${ord.mecanicoNombre}">Carlos M.</td>
+                                    <td>
+                                        <span class="badge badge-status"
+                                              th:classappend="${ord.estado.name() == 'CERTIFICADA' ? 'bg-success' : (ord.estado.name() == 'COMPLETADA' ? 'bg-info text-dark' : 'bg-warning text-dark')}"
+                                              th:text="${ord.estado}">ESTADO</span>
+                                    </td>
+                                    <td>
+                                        <span class="small" th:text="${#lists.size(ord.repuestosUtilizados)} + ' repuestos · ' + ${ord.getHorasTotales()} + ' horas'">2 repuestos · 2.5 horas</span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(ordenesParaAuditar)}">
+                                    <td colspan="5" class="text-center text-muted py-3">No hay órdenes registradas.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Portal Cliente')}">
+    <title>AutoTrace - Portal Cliente</title>
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: navbar('cliente')}"></header>
+
+<main class="container-fluid px-4 py-4">
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-car-front-fill text-primary me-2"></i>Portal del Cliente Propietario</h2>
+            <p class="text-muted mb-0">Registro de vehículos, consulta de presupuestos / cotizaciones y trazabilidad del historial de mantenimiento</p>
+        </div>
+        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-database me-1"></i> BD: taller_clientes_db
+        </span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'vehiculos' ? 'active bg-primary' : 'bg-white border'}" th:href="@{/web/cliente?tab=vehiculos}">
+                <i class="bi bi-car-front me-1"></i> Mis Vehículos Registrados
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'cotizaciones' ? 'active bg-primary' : 'bg-white border'}" th:href="@{/web/cliente?tab=cotizaciones}">
+                <i class="bi bi-receipt-cutoff me-1"></i> Cotizaciones y Presupuestos
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'historial' ? 'active bg-primary' : 'bg-white border'}" th:href="@{/web/cliente?tab=historial}">
+                <i class="bi bi-clock-history me-1"></i> Historial y Trazabilidad por Placa
+            </a>
+        </li>
+    </ul>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: VEHÍCULOS REGISTRADOS -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'vehiculos'}">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card-custom p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle-fill text-primary me-2"></i>Registrar Nuevo Vehículo</h5>
+                    <form th:action="@{/web/cliente/vehiculos/guardar}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Placa del Vehículo</label>
+                            <input type="text" name="placa" class="form-control text-uppercase" required placeholder="ABC-123" maxlength="10">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Marca</label>
+                                <input type="text" name="marca" class="form-control" required placeholder="Mazda">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Modelo</label>
+                                <input type="text" name="modelo" class="form-control" required placeholder="3 Touring">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Año</label>
+                                <input type="number" name="anio" class="form-control" required placeholder="2022" min="1970" max="2027">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Kilometraje Actual</label>
+                                <input type="number" name="kilometraje" class="form-control" required placeholder="42000" min="0">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Color</label>
+                                <input type="text" name="color" class="form-control" placeholder="Rojo">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">VIN / Chasis</label>
+                                <input type="text" name="vin" class="form-control" placeholder="9FBRD...">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Propietario Asociado</label>
+                            <select name="clienteId" class="form-select" required>
+                                <option value="" disabled selected>Seleccione cliente...</option>
+                                <option th:each="c : ${clientes}" th:value="${c.id}" th:text="${c.nombreCompleto} + ' (' + ${c.identificacion} + ')'"></option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold">
+                            <i class="bi bi-save me-1"></i> Registrar Vehículo
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Formulario Rápido de Nuevo Cliente -->
+                <div class="card-custom p-4">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-person-plus text-primary me-2"></i>Registrar Nuevo Cliente</h6>
+                    <form th:action="@{/web/cliente/clientes/guardar}" method="post">
+                        <div class="mb-2">
+                            <input type="text" name="identificacion" class="form-control form-control-sm" required placeholder="Cédula / NIT">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="nombreCompleto" class="form-control form-control-sm" required placeholder="Nombre completo">
+                        </div>
+                        <div class="mb-2">
+                            <input type="email" name="email" class="form-control form-control-sm" required placeholder="correo@email.com">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="telefono" class="form-control form-control-sm" placeholder="Teléfono celular">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100 rounded-pill">
+                            <i class="bi bi-person-check"></i> Crear Cliente
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-card-list text-primary me-2"></i>Flota de Vehículos Registrados</h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Vehículo</th>
+                                    <th>Año</th>
+                                    <th>Kilometraje</th>
+                                    <th>Propietario</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="v : ${vehiculos}">
+                                    <td>
+                                        <span class="badge bg-dark fs-6" th:text="${v.placa}">ABC-123</span>
+                                    </td>
+                                    <td>
+                                        <strong th:text="${v.marca} + ' ' + ${v.modelo}">Mazda 3</strong>
+                                        <small class="d-block text-muted" th:text="'Color: ' + ${v.color != null ? v.color : '-'}">Color</small>
+                                    </td>
+                                    <td th:text="${v.anio}">2022</td>
+                                    <td>
+                                        <span class="badge bg-info bg-opacity-25 text-info fw-bold" th:text="${#numbers.formatDecimal(v.kilometraje, 0, 'COMMA', 0, 'POINT')} + ' km'">42,000 km</span>
+                                    </td>
+                                    <td class="fw-semibold" th:text="${v.clienteNombre != null ? v.clienteNombre : 'Juan Pérez'}">Juan</td>
+                                    <td>
+                                        <a th:href="@{'/web/cliente?tab=historial&placaBuscar=' + ${v.placa}}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                            <i class="bi bi-clock-history me-1"></i> Trazabilidad
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(vehiculos)}">
+                                    <td colspan="6" class="text-center text-muted py-3">No hay vehículos registrados aún.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: COTIZACIONES Y PRESUPUESTOS -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'cotizaciones'}">
+        <div class="row g-4">
+            <div class="col-12" th:each="c : ${cotizaciones}">
+                <div class="card-custom p-4 border-start border-4"
+                     th:classappend="${c.estado.name() == 'APROBADA' ? 'border-success' : (c.estado.name() == 'RECHAZADA' ? 'border-danger' : 'border-warning')}">
+                    
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="text-muted small">Presupuesto / Cotización:</span>
+                            <h4 class="fw-bold text-primary mb-0" th:text="${c.codigoCotizacion}">COT-001</h4>
+                            <span class="badge bg-dark mt-1" th:text="'Placa: ' + ${c.placa}">ABC-123</span>
+                            <span class="text-muted small ms-2" th:text="'Cliente: ' + ${c.clienteNombre}">Juan Pérez</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge fs-6 px-3 py-2"
+                                  th:classappend="${c.estado.name() == 'APROBADA' ? 'bg-success' : (c.estado.name() == 'RECHAZADA' ? 'bg-danger' : 'bg-warning text-dark')}"
+                                  th:text="${c.estado}">PENDIENTE</span>
+                            <div class="mt-1">
+                                <span class="small text-muted">Total Estimado:</span>
+                                <strong class="fs-4 text-success d-block" th:text="'$' + ${#numbers.formatDecimal(c.totalEstimado, 0, 'COMMA', 0, 'POINT')}">$0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <span class="fw-bold small text-secondary d-block mb-1"><i class="bi bi-list-check text-primary me-1"></i>Servicios Solicitados e Incluidos:</span>
+                                <ul class="list-unstyled mb-0 small">
+                                    <li th:each="item : ${c.serviciosSolicitados}" class="py-1">
+                                        <i class="bi bi-check2-circle text-success me-1"></i>
+                                        <span th:text="${item}">Servicio</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6 border-start">
+                                <span class="fw-bold small text-secondary d-block mb-1"><i class="bi bi-chat-quote text-warning me-1"></i>Observaciones del Taller:</span>
+                                <p class="small mb-1" th:text="${c.observaciones}">Observaciones iniciales del presupuesto.</p>
+                                <div th:if="${c.respuestaCliente != null and !#strings.isEmpty(c.respuestaCliente)}" class="mt-2 p-2 bg-white rounded border">
+                                    <small class="fw-bold text-muted d-block">Respuesta del Cliente:</small>
+                                    <span class="small" th:text="${c.respuestaCliente}">Respuesta</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción para el Cliente (Aprobar / Rechazar) -->
+                    <div th:if="${c.estado.name() == 'PENDIENTE'}" class="d-flex justify-content-end gap-2 pt-2 border-top">
+                        <!-- Botón Modal Rechazar -->
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold" data-bs-toggle="modal" th:data-bs-target="'#modalRechazar_' + ${c.id}">
+                            <i class="bi bi-x-circle me-1"></i> Rechazar Cotización
+                        </button>
+                        <!-- Botón Modal Aprobar -->
+                        <button type="button" class="btn btn-success btn-sm rounded-pill px-4 fw-bold" data-bs-toggle="modal" th:data-bs-target="'#modalAprobar_' + ${c.id}">
+                            <i class="bi bi-check-circle-fill me-1"></i> Aprobar Servicios
+                        </button>
+                    </div>
+
+                    <div th:unless="${c.estado.name() == 'PENDIENTE'}" class="text-end small text-muted pt-2 border-top">
+                        <i class="bi bi-info-circle me-1"></i> Esta cotización ya fue gestionada el <span th:text="${#temporals.format(c.fechaRespuesta, 'dd/MM/yyyy HH:mm')}">fecha</span>.
+                    </div>
+
+                </div>
+
+                <!-- MODAL APROBAR -->
+                <div class="modal fade" th:id="'modalAprobar_' + ${c.id}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form th:action="@{'/web/cliente/cotizaciones/' + ${c.id} + '/aprobar'}" method="post">
+                                <div class="modal-header bg-success bg-opacity-10">
+                                    <h5 class="modal-title fw-bold text-success"><i class="bi bi-check2-circle me-1"></i>Aprobar Presupuesto de Servicios</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Deseas autorizar al taller a iniciar los trabajos para el vehículo <strong><span th:text="${c.placa}"></span></strong>?</p>
+                                    <p class="small text-muted">Al aprobar, se creará automáticamente la <strong>Orden de Trabajo</strong> oficial para la trazabilidad del mecánico.</p>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold">Comentarios / Observaciones (Opcional)</label>
+                                        <input type="text" name="comentario" class="form-control" placeholder="Ej: Autorizado por Juan Pérez, favor avisar al terminar." value="Aprobado por el cliente.">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-sm btn-success fw-bold rounded-pill">Confirmar y Aprobar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MODAL RECHAZAR -->
+                <div class="modal fade" th:id="'modalRechazar_' + ${c.id}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form th:action="@{'/web/cliente/cotizaciones/' + ${c.id} + '/rechazar'}" method="post">
+                                <div class="modal-header bg-danger bg-opacity-10">
+                                    <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-1"></i>Rechazar Presupuesto</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold">Motivo del Rechazo</label>
+                                        <textarea name="motivo" class="form-control" rows="3" required placeholder="Indica la razón: costo elevado, venta del vehículo, cambio de fecha..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-sm btn-danger fw-bold rounded-pill">Confirmar Rechazo</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-12 text-center text-muted py-5" th:if="${#lists.isEmpty(cotizaciones)}">
+                <i class="bi bi-receipt fs-1 text-muted d-block mb-2"></i>
+                <h5>No hay cotizaciones registradas.</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: HISTORIAL Y TRAZABILIDAD POR PLACA -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'historial'}">
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-search text-primary me-2"></i>Consultar Hoja de Vida y Trazabilidad de Mantenimiento</h5>
+            <form th:action="@{/web/cliente}" method="get" class="row g-2 align-items-center">
+                <input type="hidden" name="tab" value="historial">
+                <div class="col-md-6 col-lg-4">
+                    <input type="text" name="placaBuscar" class="form-control text-uppercase fw-bold" placeholder="Ingresa la placa (Ej: ABC-123)" th:value="${placaBuscada}" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary rounded-pill fw-semibold px-4">
+                        <i class="bi bi-search me-1"></i> Consultar Trazabilidad
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${placaBuscada != null}">
+            <!-- Datos del Vehículo Seleccionado -->
+            <div class="card-custom p-4 mb-4 bg-dark text-white" th:if="${vehiculoSeleccionado != null}">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <span class="text-secondary small">Vehículo</span>
+                        <h3 class="fw-bold text-info mb-0" th:text="${vehiculoSeleccionado.placa}">ABC-123</h3>
+                        <span th:text="${vehiculoSeleccionado.marca} + ' ' + ${vehiculoSeleccionado.modelo} + ' (' + ${vehiculoSeleccionado.anio} + ')'">Mazda 3</span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-secondary small">Kilometraje Registrado</span>
+                        <h4 class="fw-bold mb-0" th:text="${#numbers.formatDecimal(vehiculoSeleccionado.kilometraje, 0, 'COMMA', 0, 'POINT')} + ' km'">42,500 km</h4>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-secondary small">VIN / Chasis</span>
+                        <p class="mb-0 small text-truncate" th:text="${vehiculoSeleccionado.vin}">9FBRD...</p>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="text-secondary small">Propietario</span>
+                        <p class="mb-0 fw-bold" th:text="${vehiculoSeleccionado.clienteNombre}">Juan Pérez</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Línea de Tiempo de Intervenciones -->
+            <h5 class="fw-bold mb-3"><i class="bi bi-calendar2-range text-primary me-2"></i>Línea de Tiempo de Intervenciones y Servicios</h5>
+            
+            <div class="row g-4 mb-4" th:if="${!#lists.isEmpty(historialOrdenes)}">
+                <div class="col-12" th:each="h : ${historialOrdenes}">
+                    <div class="card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="badge bg-primary me-1" th:text="${h.numeroOrden}">OT-001</span>
+                                <strong class="fs-6 text-dark" th:text="${h.motivoIngreso}">Motivo</strong>
+                            </div>
+                            <span class="badge badge-status"
+                                  th:classappend="${h.estado.name() == 'CERTIFICADA' || h.estado.name() == 'COMPLETADA' ? 'bg-success' : 'bg-warning text-dark'}"
+                                  th:text="${h.estado}">ESTADO</span>
+                        </div>
+                        <div class="row g-3 small text-muted mb-2">
+                            <div class="col-md-4">
+                                <strong>Fecha:</strong> <span th:text="${#temporals.format(h.fechaIngreso, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Mecánico Responsable:</strong> <span th:text="${h.mecanicoNombre}">Carlos</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Costo Total:</strong> <span class="text-success fw-bold" th:text="'$' + ${#numbers.formatDecimal(h.costoTotal, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 mb-2" th:if="${h.diagnosticoTecnico != null}">
+                            <strong class="d-block text-secondary small">Diagnóstico Técnico:</strong>
+                            <p class="small mb-0" th:text="${h.diagnosticoTecnico}"></p>
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 mb-2" th:if="${h.reparacionesEfectuadas != null}">
+                            <strong class="d-block text-success small">Reparaciones Realizadas:</strong>
+                            <p class="small mb-0" th:text="${h.reparacionesEfectuadas}"></p>
+                        </div>
+
+                        <div th:if="${!#lists.isEmpty(h.repuestosUtilizados)}" class="small mt-2">
+                            <strong>Repuestos certificados instalados:</strong>
+                            <span th:each="ru : ${h.repuestosUtilizados}" class="badge bg-secondary me-1" th:text="${ru.nombre} + ' (x' + ${ru.cantidad} + ')'">Filtro</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info" th:if="${#lists.isEmpty(historialOrdenes)}">
+                <i class="bi bi-info-circle me-1"></i> No se encontraron órdenes de servicio para la placa <strong><span th:text="${placaBuscada}"></span></strong>.
+            </div>
+
+            <!-- Certificaciones ISO del Vehículo -->
+            <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-award-fill text-purple me-2"></i>Certificaciones de Calidad y Seguridad Emitidas</h5>
+            <div class="row g-3" th:if="${!#lists.isEmpty(certificacionesPlaca)}">
+                <div class="col-md-6" th:each="cert : ${certificacionesPlaca}">
+                    <div class="card-custom p-3 border-start border-4 border-info">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="fw-bold text-primary mb-0" th:text="${cert.codigoCertificado}">CERT-001</h6>
+                            <span class="badge bg-success" th:text="${cert.puntajeCalidad} + '% Conforme'">100%</span>
+                        </div>
+                        <p class="small text-muted mb-2" th:text="${cert.observacionesAuditor}">Observaciones</p>
+                        <div class="small text-truncate text-muted font-monospace mb-2" th:text="'Hash: ' + ${cert.hashTrazabilidad}">Hash</div>
+                        <a th:href="@{'/web/auditor/certificado/' + ${cert.id}}" class="btn btn-sm btn-outline-info rounded-pill">
+                            <i class="bi bi-eye"></i> Ver Certificado Oficial
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-muted small" th:if="${#lists.isEmpty(certificacionesPlaca)}">
+                No hay certificados emitidos aún para este vehículo.
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

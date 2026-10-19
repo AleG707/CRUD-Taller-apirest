@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel Administrador')}">
+    <title>AutoTrace - Panel Administrador</title>
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: navbar('admin')}"></header>
+
+<main class="container-fluid px-4 py-4">
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-shield-lock-fill text-danger me-2"></i>Panel del Administrador del Taller</h2>
+            <p class="text-muted mb-0">Gestión de usuarios, roles, catálogo de servicios técnicos y catálogo de repuestos (CRUD)</p>
+        </div>
+        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-database me-1"></i> BD: taller_admin_db
+        </span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'usuarios' ? 'active bg-danger' : 'bg-white border'}" th:href="@{/web/admin?tab=usuarios}">
+                <i class="bi bi-people-fill me-1"></i> Gestión de Usuarios y Roles
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'servicios' ? 'active bg-danger' : 'bg-white border'}" th:href="@{/web/admin?tab=servicios}">
+                <i class="bi bi-card-checklist me-1"></i> Catálogo de Servicios
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'repuestos' ? 'active bg-danger' : 'bg-white border'}" th:href="@{/web/admin?tab=repuestos}">
+                <i class="bi bi-boxes me-1"></i> Catálogo de Repuestos & Stock
+            </a>
+        </li>
+    </ul>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: USUARIOS Y ROLES -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'usuarios'}">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-person-plus-fill text-danger me-2"></i>Registrar / Editar Usuario</h5>
+                    <form th:action="@{/web/admin/usuarios/guardar}" method="post">
+                        <input type="hidden" name="id" id="userId">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nombre Completo</label>
+                            <input type="text" name="nombre" id="userNombre" class="form-control" required placeholder="Ej: Roberto Gómez">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Correo Electrónico</label>
+                            <input type="email" name="email" id="userEmail" class="form-control" required placeholder="ejemplo@taller.com">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Contraseña</label>
+                            <input type="password" name="password" id="userPass" class="form-control" placeholder="••••••••">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Rol del Sistema</label>
+                            <select name="rol" id="userRol" class="form-select" required>
+                                <option value="" disabled selected>Seleccione un rol...</option>
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Teléfono de Contacto</label>
+                            <input type="text" name="telefono" id="userTel" class="form-control" placeholder="Ej: 3001234567">
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" name="activo" id="userActivo" value="true" checked>
+                            <label class="form-check-label small" for="userActivo">Usuario Activo</label>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-semibold">
+                            <i class="bi bi-save me-1"></i> Guardar Usuario
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-people text-danger me-2"></i>Usuarios Registrados</h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Teléfono</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="u : ${usuarios}">
+                                    <td class="fw-semibold" th:text="${u.nombre}">Nombre</td>
+                                    <td th:text="${u.email}">Email</td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${u.rol.name() == 'ADMINISTRADOR' ? 'bg-danger' : (u.rol.name() == 'MECANICO' ? 'bg-warning text-dark' : (u.rol.name() == 'CLIENTE' ? 'bg-primary' : (u.rol.name() == 'PROVEEDOR' ? 'bg-success' : 'bg-info text-dark')))}"
+                                              th:text="${u.rol}">ROL</span>
+                                    </td>
+                                    <td th:text="${u.telefono != null ? u.telefono : '-'}">-</td>
+                                    <td>
+                                        <span th:if="${u.activo}" class="badge bg-success bg-opacity-10 text-success">Activo</span>
+                                        <span th:unless="${u.activo}" class="badge bg-secondary">Inactivo</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/web/admin/usuarios/eliminar/' + ${u.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar usuario?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(usuarios)}">
+                                    <td colspan="6" class="text-center text-muted py-3">No hay usuarios registrados.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: CATÁLOGO DE SERVICIOS -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'servicios'}">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle-fill text-danger me-2"></i>Agregar / Editar Servicio</h5>
+                    <form th:action="@{/web/admin/servicios/guardar}" method="post">
+                        <input type="hidden" name="id" id="srvId">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Código del Servicio</label>
+                            <input type="text" name="codigo" class="form-control" required placeholder="Ej: SRV-006">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nombre del Servicio</label>
+                            <input type="text" name="nombre" class="form-control" required placeholder="Ej: Cambio de Correa de Tiempo">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Categoría</label>
+                            <select name="categoria" class="form-select" required>
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Motor">Motor</option>
+                                <option value="Frenos">Frenos</option>
+                                <option value="Lubricación">Lubricación</option>
+                                <option value="Suspensión">Suspensión</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Precio Base ($)</label>
+                                <input type="number" step="0.01" name="precioBase" class="form-control" required placeholder="120000">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Duración (min)</label>
+                                <input type="number" name="duracionMinutos" class="form-control" required placeholder="60">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Descripción del Servicio</label>
+                            <textarea name="descripcion" class="form-control" rows="3" placeholder="Detalle técnico del procedimiento..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-semibold">
+                            <i class="bi bi-save me-1"></i> Guardar en Catálogo
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-card-checklist text-danger me-2"></i>Servicios Ofertados en el Taller</h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Servicio</th>
+                                    <th>Categoría</th>
+                                    <th>Precio Base</th>
+                                    <th>Duración</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="s : ${servicios}">
+                                    <td class="fw-bold text-primary" th:text="${s.codigo}">SRV-001</td>
+                                    <td>
+                                        <strong th:text="${s.nombre}">Nombre</strong>
+                                        <small class="d-block text-muted text-truncate" style="max-width: 250px;" th:text="${s.descripcion}">Desc</small>
+                                    </td>
+                                    <td><span class="badge bg-secondary" th:text="${s.categoria}">Cat</span></td>
+                                    <td class="fw-bold text-success" th:text="'$' + ${#numbers.formatDecimal(s.precioBase, 0, 'COMMA', 0, 'POINT')}">$0</td>
+                                    <td th:text="${s.duracionMinutos} + ' min'">0 min</td>
+                                    <td>
+                                        <a th:href="@{'/web/admin/servicios/eliminar/' + ${s.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar servicio del catálogo?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(servicios)}">
+                                    <td colspan="6" class="text-center text-muted py-3">No hay servicios en el catálogo.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: CATÁLOGO DE REPUESTOS Y STOCK -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'repuestos'}">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-plus-square-fill text-danger me-2"></i>Agregar Repuesto al Catálogo</h5>
+                    <form th:action="@{/web/admin/repuestos/guardar}" method="post">
+                        <input type="hidden" name="id" id="repId">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Código / SKU</label>
+                            <input type="text" name="codigo" class="form-control" required placeholder="Ej: REP-106">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nombre del Repuesto</label>
+                            <input type="text" name="nombre" class="form-control" required placeholder="Ej: Amortiguador Delantero">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Categoría</label>
+                                <input type="text" name="categoria" class="form-control" required placeholder="Suspensión">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Marca Fabricante</label>
+                                <input type="text" name="marca" class="form-control" required placeholder="Monroe">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Precio de Venta ($)</label>
+                            <input type="number" step="0.01" name="precioVenta" class="form-control" required placeholder="185000">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Stock Actual</label>
+                                <input type="number" name="stockActual" class="form-control" required placeholder="10">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Stock Mínimo</label>
+                                <input type="number" name="stockMinimo" class="form-control" required placeholder="4">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Proveedor Asignado</label>
+                            <input type="text" name="proveedorDefault" class="form-control" placeholder="Distribuidora AutoPartes">
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 rounded-pill fw-semibold">
+                            <i class="bi bi-save me-1"></i> Guardar Repuesto
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-boxes text-danger me-2"></i>Inventario de Repuestos</h5>
+                    <div class="table-responsive">
+                        <table class="table table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Repuesto</th>
+                                    <th>Marca</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Alerta</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="r : ${repuestos}">
+                                    <td class="fw-bold text-primary" th:text="${r.codigo}">REP-001</td>
+                                    <td>
+                                        <strong th:text="${r.nombre}">Nombre</strong>
+                                        <small class="d-block text-muted" th:text="${r.categoria}">Cat</small>
+                                    </td>
+                                    <td th:text="${r.marca}">Marca</td>
+                                    <td class="fw-bold text-success" th:text="'$' + ${#numbers.formatDecimal(r.precioVenta, 0, 'COMMA', 0, 'POINT')}">$0</td>
+                                    <td>
+                                        <span class="fw-bold" th:text="${r.stockActual}">0</span>
+                                        <small class="text-muted" th:text="'(Mín: ' + ${r.stockMinimo} + ')'">(Mín: 0)</small>
+                                    </td>
+                                    <td>
+                                        <span th:if="${r.stockActual <= r.stockMinimo}" class="badge bg-danger">
+                                            <i class="bi bi-exclamation-triangle"></i> Bajo Stock
+                                        </span>
+                                        <span th:unless="${r.stockActual <= r.stockMinimo}" class="badge bg-success bg-opacity-25 text-success">
+                                            Óptimo
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{'/web/admin/repuestos/eliminar/' + ${r.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar repuesto?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(repuestos)}">
+                                    <td colspan="7" class="text-center text-muted py-3">No hay repuestos registrados en catálogo.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

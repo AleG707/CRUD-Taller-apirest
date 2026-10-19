@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Portal Proveedor')}">
+    <title>AutoTrace - Portal Proveedor</title>
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: navbar('proveedor')}"></header>
+
+<main class="container-fluid px-4 py-4">
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-truck text-success me-2"></i>Portal del Proveedor de Repuestos</h2>
+            <p class="text-muted mb-0">Gestión de suministros mayoristas, atención de pedidos de reabastecimiento del taller y registro de despachos y entregas</p>
+        </div>
+        <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-database me-1"></i> BD: taller_proveedores_db
+        </span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'pedidos' ? 'active bg-success' : 'bg-white border'}" th:href="@{/web/proveedor?tab=pedidos}">
+                <i class="bi bi-box-seam me-1"></i> Pedidos de Reabastecimiento del Taller
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tabActiva == 'inventario' ? 'active bg-success' : 'bg-white border'}" th:href="@{/web/proveedor?tab=inventario}">
+                <i class="bi bi-shop me-1"></i> Catálogo Mayorista e Inventario
+            </a>
+        </li>
+    </ul>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: PEDIDOS DE REABASTECIMIENTO -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'pedidos'}">
+        <div class="card-custom p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-inboxes-fill text-success me-2"></i>Órdenes de Compra y Reposición de Stock</h5>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Código Pedido</th>
+                            <th>Repuesto Solicitado</th>
+                            <th>Cantidad</th>
+                            <th>Costo Total</th>
+                            <th>Estado</th>
+                            <th>Guía / Transporte</th>
+                            <th>Acciones del Proveedor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${pedidos}">
+                            <td class="fw-bold text-primary" th:text="${p.codigoPedido}">PED-001</td>
+                            <td>
+                                <strong th:text="${p.repuestoNombre}">Nombre Repuesto</strong>
+                                <small class="d-block text-muted" th:text="'Código: ' + ${p.repuestoCodigo}">REP-101</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-dark fs-6" th:text="${p.cantidadSolicitada} + ' unidades'">10</span>
+                            </td>
+                            <td class="fw-bold text-success" th:text="'$' + ${#numbers.formatDecimal(p.costoTotal, 0, 'COMMA', 0, 'POINT')}">$0</td>
+                            <td>
+                                <span class="badge badge-status"
+                                      th:classappend="${p.estado.name() == 'ENTREGADO' ? 'bg-success' : (p.estado.name() == 'EN_CAMINO' ? 'bg-warning text-dark' : 'bg-primary')}"
+                                      th:text="${p.estado}">SOLICITADO</span>
+                            </td>
+                            <td>
+                                <div th:if="${p.numeroGuia != null}">
+                                    <strong class="d-block small" th:text="${p.transportadora}">Servientrega</strong>
+                                    <small class="text-muted" th:text="'Guía: ' + ${p.numeroGuia}">Guía</small>
+                                </div>
+                                <span th:unless="${p.numeroGuia != null}" class="text-muted small fst-italic">Pendiente de despacho</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <!-- Botón Despachar -->
+                                    <button th:if="${p.estado.name() == 'SOLICITADO'}" type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold rounded-pill"
+                                            data-bs-toggle="modal" th:data-bs-target="'#modalDespacho_' + ${p.id}">
+                                        <i class="bi bi-send me-1"></i> Despachar
+                                    </button>
+
+                                    <!-- Botón Confirmar Entrega -->
+                                    <button th:if="${p.estado.name() == 'EN_CAMINO'}" type="button" class="btn btn-sm btn-success fw-semibold rounded-pill"
+                                            data-bs-toggle="modal" th:data-bs-target="'#modalEntrega_' + ${p.id}">
+                                        <i class="bi bi-check-circle me-1"></i> Confirmar Entrega
+                                    </button>
+
+                                    <span th:if="${p.estado.name() == 'ENTREGADO'}" class="badge bg-success bg-opacity-25 text-success">
+                                        <i class="bi bi-check2-all"></i> Stock Reabastecido
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(pedidos)}">
+                            <td colspan="7" class="text-center text-muted py-3">No hay pedidos de reabastecimiento registrados.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modales de Despacho y Entrega -->
+        <div th:each="p : ${pedidos}">
+            <!-- Modal Despacho -->
+            <div class="modal fade" th:id="'modalDespacho_' + ${p.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{'/web/proveedor/pedidos/' + ${p.id} + '/despachar'}" method="post">
+                            <div class="modal-header bg-warning bg-opacity-10">
+                                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-truck me-1"></i>Registrar Despacho de Repuestos</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="small text-muted mb-2">Pedido: <strong th:text="${p.codigoPedido}">PED</strong> - Repuesto: <strong th:text="${p.repuestoNombre}">REP</strong></p>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Empresa Transportadora</label>
+                                    <input type="text" name="transportadora" class="form-control" required placeholder="Ej: Servientrega, Envia, TCC">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Número de Guía / Tracking</label>
+                                    <input type="text" name="numeroGuia" class="form-control" required placeholder="Ej: GUIA-98765432">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill">Confirmar Despacho</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Entrega -->
+            <div class="modal fade" th:id="'modalEntrega_' + ${p.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{'/web/proveedor/pedidos/' + ${p.id} + '/entregar'}" method="post">
+                            <div class="modal-header bg-success bg-opacity-10">
+                                <h5 class="modal-title fw-bold text-success"><i class="bi bi-check2-circle me-1"></i>Confirmar Recepción y Entrega</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>¿Confirmar que las <strong><span th:text="${p.cantidadSolicitada}"></span></strong> unidades de <strong><span th:text="${p.repuestoNombre}"></span></strong> han sido entregadas al taller?</p>
+                                <p class="small text-muted">Esta acción incrementará automáticamente el <strong>stock disponible</strong> en el catálogo del taller.</p>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Observaciones de Entrega</label>
+                                    <input type="text" name="observaciones" class="form-control" placeholder="Ej: Recibido conforme con empaque sellado en almacén.">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-success fw-bold rounded-pill">Registrar Entrega y Actualizar Stock</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: INVENTARIO MAYORISTA DEL PROVEEDOR -->
+    <!-- ========================================== -->
+    <div th:if="${tabActiva == 'inventario'}">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card-custom p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle text-success me-2"></i>Agregar Suministro a Proveedor</h5>
+                    <form th:action="@{/web/proveedor/suministros/guardar}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Proveedor</label>
+                            <select name="proveedorId" class="form-select" required>
+                                <option value="" disabled selected>Seleccione proveedor...</option>
+                                <option th:each="pv : ${proveedores}" th:value="${pv.id}" th:text="${pv.razonSocial}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Código del Repuesto</label>
+                            <input type="text" name="codigo" class="form-control" required placeholder="Ej: REP-106">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Nombre del Suministro</label>
+                            <input type="text" name="nombre" class="form-control" required placeholder="Ej: Bomba de Agua">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Categoría</label>
+                            <input type="text" name="categoria" class="form-control" required placeholder="Motor">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Precio Costo ($)</label>
+                                <input type="number" step="0.01" name="precioCosto" class="form-control" required placeholder="110000">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold">Stock en Bodega</label>
+                                <input type="number" name="stockBodega" class="form-control" required placeholder="50">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 rounded-pill fw-semibold">
+                            <i class="bi bi-save me-1"></i> Guardar Suministro
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Formulario Rápido de Nuevo Proveedor -->
+                <div class="card-custom p-4">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-building-add text-success me-2"></i>Registrar Empresa Proveedora</h6>
+                    <form th:action="@{/web/proveedor/guardar}" method="post">
+                        <div class="mb-2">
+                            <input type="text" name="nit" class="form-control form-control-sm" required placeholder="NIT (Ej: 900.123.456-7)">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="razonSocial" class="form-control form-control-sm" required placeholder="Razón Social">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="contacto" class="form-control form-control-sm" placeholder="Persona de contacto">
+                        </div>
+                        <div class="mb-2">
+                            <input type="email" name="email" class="form-control form-control-sm" placeholder="ventas@proveedor.com">
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="ciudad" class="form-control form-control-sm" placeholder="Ciudad (Ej: Bogotá)">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-success w-100 rounded-pill">
+                            <i class="bi bi-building-check"></i> Guardar Proveedor
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card-custom p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-boxes text-success me-2"></i>Empresas Proveedoras y Catálogo Suministrado</h5>
+                    <div th:each="pv : ${proveedores}" class="border rounded-3 p-3 mb-3 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-0" th:text="${pv.razonSocial}">AutoPartes</h6>
+                                <small class="text-muted" th:text="'NIT: ' + ${pv.nit} + ' · Ciudad: ' + ${pv.ciudad}">NIT</small>
+                            </div>
+                            <span class="badge bg-success bg-opacity-25 text-success">Activo</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered bg-white mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Repuesto Mayorista</th>
+                                        <th>Categoría</th>
+                                        <th>Precio Costo</th>
+                                        <th>Stock Bodega</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="sum : ${pv.suministros}">
+                                        <td class="fw-bold" th:text="${sum.codigo}">REP-101</td>
+                                        <td th:text="${sum.nombre}">Filtro</td>
+                                        <td th:text="${sum.categoria}">Cat</td>
+                                        <td class="fw-bold text-success" th:text="'$' + ${#numbers.formatDecimal(sum.precioCosto, 0, 'COMMA', 0, 'POINT')}">$0</td>
+                                        <td>
+                                            <span class="badge bg-secondary" th:text="${sum.stockBodega} + ' disponibles'">100</span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(pv.suministros)}">
+                                        <td colspan="5" class="text-center text-muted small py-2">Sin repuestos cargados para este proveedor.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

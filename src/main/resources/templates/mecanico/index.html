@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Panel Mecánico')}">
+    <title>AutoTrace - Panel Mecánico</title>
+</head>
+<body>
+
+<header th:replace="~{fragments/layout :: navbar('mecanico')}"></header>
+
+<main class="container-fluid px-4 py-4">
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-tools text-warning me-2"></i>Panel Operativo del Mecánico</h2>
+            <p class="text-muted mb-0">Gestión de órdenes de trabajo asignadas, registro de diagnósticos, repuestos utilizados y tiempos de servicio</p>
+        </div>
+        <span class="badge bg-warning bg-opacity-10 text-dark border border-warning px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-database me-1"></i> BD: taller_ordenes_db
+        </span>
+    </div>
+
+    <!-- Filtro de Estados -->
+    <div class="card-custom p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="small fw-bold text-muted"><i class="bi bi-funnel-fill"></i> Filtrar órdenes:</span>
+            <a th:href="@{/web/mecanico}" class="btn btn-sm" th:classappend="${estadoFiltro == null ? 'btn-dark' : 'btn-outline-secondary'}">Todas</a>
+            <a th:each="est : ${estados}" th:href="@{/web/mecanico(estado=${est})}"
+               class="btn btn-sm" th:classappend="${estadoFiltro == est ? 'btn-warning text-dark fw-bold' : 'btn-outline-secondary'}"
+               th:text="${est}">ESTADO</a>
+        </div>
+        <div class="small text-muted">
+            <i class="bi bi-info-circle"></i> Tarifa mano de obra: <strong>$45,000 / hora</strong>
+        </div>
+    </div>
+
+    <!-- Lista de Órdenes de Trabajo -->
+    <div class="row g-4">
+        <div class="col-12" th:each="o : ${ordenes}">
+            <div class="card-custom p-4 border-start border-4"
+                 th:classappend="${o.estado.name() == 'COMPLETADA' || o.estado.name() == 'CERTIFICADA' ? 'border-success' : (o.estado.name() == 'EN_REPARACION' ? 'border-warning' : 'border-primary')}">
+                
+                <div class="row g-3 align-items-center mb-3">
+                    <div class="col-md-3">
+                        <span class="text-muted small">Número de Orden</span>
+                        <h4 class="fw-bold text-primary mb-0" th:text="${o.numeroOrden}">OT-2026-001</h4>
+                        <span class="badge bg-dark mt-1" th:text="${o.vehiculoPlaca}">ABC-123</span>
+                        <small class="text-muted ms-1" th:text="${o.vehiculoMarcaModelo}">Mazda 3</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <span class="text-muted small">Cliente Propietario</span>
+                        <h6 class="fw-bold mb-0" th:text="${o.clienteNombre}">Juan Pérez</h6>
+                        <small class="text-muted">Km Ingreso: <strong th:text="${o.kilometrajeIngreso != null ? o.kilometrajeIngreso : '-'}">42,500</strong> km</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <span class="text-muted small">Mecánico Asignado</span>
+                        <h6 class="fw-bold mb-0 text-dark" th:text="${o.mecanicoNombre != null ? o.mecanicoNombre : 'Sin Asignar'}">Carlos Mecánico</h6>
+                        <small class="text-muted">Ingreso: <span th:text="${#temporals.format(o.fechaIngreso, 'dd/MM/yyyy HH:mm')}">01/01/2026</span></small>
+                    </div>
+
+                    <div class="col-md-3 text-md-end">
+                        <span class="text-muted small d-block">Estado Actual</span>
+                        <span class="badge badge-status fs-6"
+                              th:classappend="${o.estado.name() == 'COMPLETADA' || o.estado.name() == 'CERTIFICADA' ? 'bg-success' : (o.estado.name() == 'EN_REPARACION' ? 'bg-warning text-dark' : 'bg-primary')}"
+                              th:text="${o.estado}">EN_REPARACION</span>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded-3 mb-3">
+                    <div class="row g-3">
+                        <div class="col-md-6 border-end">
+                            <span class="fw-bold text-secondary small d-block mb-1"><i class="bi bi-chat-left-dots text-primary me-1"></i>Motivo de Ingreso / Síntomas:</span>
+                            <p class="mb-0 small" th:text="${o.motivoIngreso}">Falla reportada por el cliente.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="fw-bold text-secondary small d-block mb-1"><i class="bi bi-search text-warning me-1"></i>Diagnóstico Técnico Registrado:</span>
+                            <p class="mb-0 small text-dark" th:if="${o.diagnosticoTecnico != null and !#strings.isEmpty(o.diagnosticoTecnico)}" th:text="${o.diagnosticoTecnico}">Diagnóstico del mecánico...</p>
+                            <p class="mb-0 small text-muted fst-italic" th:unless="${o.diagnosticoTecnico != null and !#strings.isEmpty(o.diagnosticoTecnico)}">Sin diagnóstico técnico registrado aún.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded-3 mb-3" th:if="${o.reparacionesEfectuadas != null and !#strings.isEmpty(o.reparacionesEfectuadas)}">
+                    <span class="fw-bold text-success small d-block mb-1"><i class="bi bi-check-all text-success me-1"></i>Reparaciones Realizadas:</span>
+                    <p class="mb-0 small" th:text="${o.reparacionesEfectuadas}">Detalles de trabajos realizados...</p>
+                </div>
+
+                <!-- Desglose de Repuestos y Tiempos de Trazabilidad -->
+                <div class="row g-3 mb-3">
+                    <!-- Repuestos Utilizados -->
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 bg-white h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small text-secondary"><i class="bi bi-boxes text-danger me-1"></i>Repuestos Utilizados (<span th:text="${#lists.size(o.repuestosUtilizados)}">0</span>)</span>
+                                <span class="badge bg-secondary" th:text="'Subtotal: $' + ${#numbers.formatDecimal(o.costoRepuestos, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                            </div>
+                            <ul class="list-group list-group-flush small" th:if="${!#lists.isEmpty(o.repuestosUtilizados)}">
+                                <li class="list-group-item px-0 py-1 d-flex justify-content-between" th:each="r : ${o.repuestosUtilizados}">
+                                    <span>
+                                        <strong th:text="${r.nombre}">Filtro</strong>
+                                        <small class="text-muted" th:text="' x ' + ${r.cantidad}">x1</small>
+                                    </span>
+                                    <span class="text-success fw-semibold" th:text="'$' + ${#numbers.formatDecimal(r.subtotal, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                                </li>
+                            </ul>
+                            <small class="text-muted fst-italic d-block" th:if="${#lists.isEmpty(o.repuestosUtilizados)}">No se han registrado repuestos utilizados.</small>
+                        </div>
+                    </div>
+
+                    <!-- Tiempos de Mano de Obra -->
+                    <div class="col-md-6">
+                        <div class="border rounded-3 p-3 bg-white h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold small text-secondary"><i class="bi bi-stopwatch text-info me-1"></i>Tiempos de Servicio (<span th:text="${o.getHorasTotales()}">0</span> h)</span>
+                                <span class="badge bg-secondary" th:text="'Mano Obra: $' + ${#numbers.formatDecimal(o.costoManoObra, 0, 'COMMA', 0, 'POINT')}">$0</span>
+                            </div>
+                            <ul class="list-group list-group-flush small" th:if="${!#lists.isEmpty(o.registrosTiempo)}">
+                                <li class="list-group-item px-0 py-1 d-flex justify-content-between" th:each="t : ${o.registrosTiempo}">
+                                    <span>
+                                        <strong th:text="${t.descripcionTarea}">Tarea</strong>
+                                        <small class="text-muted" th:text="' (' + ${t.mecanicoNombre} + ')'">(Carlos)</small>
+                                    </span>
+                                    <span class="badge bg-light text-dark border" th:text="${t.horas} + 'h ' + ${t.minutos} + 'm'">1h 30m</span>
+                                </li>
+                            </ul>
+                            <small class="text-muted fst-italic d-block" th:if="${#lists.isEmpty(o.registrosTiempo)}">No se han cargado horas de servicio.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Acciones del Mecánico -->
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+                    <div>
+                        <span class="small text-muted me-2">Costo Total Acumulado:</span>
+                        <strong class="fs-5 text-success" th:text="'$' + ${#numbers.formatDecimal(o.costoTotal, 0, 'COMMA', 0, 'POINT')}">$0</strong>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <!-- Botón Modal Diagnóstico -->
+                        <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-semibold rounded-pill" data-bs-toggle="modal" th:data-bs-target="'#modalDiag_' + ${o.id}">
+                            <i class="bi bi-pencil-square me-1"></i> Diagnóstico
+                        </button>
+
+                        <!-- Botón Modal Reparaciones -->
+                        <button type="button" class="btn btn-sm btn-outline-success fw-semibold rounded-pill" data-bs-toggle="modal" th:data-bs-target="'#modalReparacion_' + ${o.id}">
+                            <i class="bi bi-wrench me-1"></i> Reparaciones
+                        </button>
+
+                        <!-- Botón Modal Agregar Repuesto -->
+                        <button type="button" class="btn btn-sm btn-outline-danger fw-semibold rounded-pill" data-bs-toggle="modal" th:data-bs-target="'#modalRepuesto_' + ${o.id}">
+                            <i class="bi bi-plus-circle me-1"></i> Cargar Repuesto
+                        </button>
+
+                        <!-- Botón Modal Agregar Tiempo -->
+                        <button type="button" class="btn btn-sm btn-outline-info fw-semibold rounded-pill" data-bs-toggle="modal" th:data-bs-target="'#modalTiempo_' + ${o.id}">
+                            <i class="bi bi-clock me-1"></i> Cargar Horas
+                        </button>
+
+                        <!-- Cambiar Estado Directo -->
+                        <form th:action="@{'/web/mecanico/ordenes/' + ${o.id} + '/estado'}" method="post" class="d-inline-flex gap-1">
+                            <select name="estado" class="form-select form-select-sm" style="width: auto;">
+                                <option th:each="est : ${estados}" th:value="${est}" th:text="${est}" th:selected="${est == o.estado}"></option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-dark rounded-pill">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- MODAL: REGISTRAR DIAGNÓSTICO -->
+            <div class="modal fade" th:id="'modalDiag_' + ${o.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{'/web/mecanico/ordenes/' + ${o.id} + '/diagnostico'}" method="post">
+                            <div class="modal-header bg-warning bg-opacity-10">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-search text-warning me-1"></i>Registrar Diagnóstico Técnico</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="small text-muted mb-2">Orden: <strong th:text="${o.numeroOrden}">OT</strong> - Placa: <strong th:text="${o.vehiculoPlaca}">ABC-123</strong></p>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Diagnóstico y Hallazgos Técnicos</label>
+                                    <textarea name="diagnosticoTecnico" class="form-control" rows="4" required th:text="${o.diagnosticoTecnico}" placeholder="Describa fallas encontradas, nivel de desgaste, mediciones..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill">Guardar Diagnóstico</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: REGISTRAR REPARACIONES -->
+            <div class="modal fade" th:id="'modalReparacion_' + ${o.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{'/web/mecanico/ordenes/' + ${o.id} + '/reparaciones'}" method="post">
+                            <div class="modal-header bg-success bg-opacity-10">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-wrench text-success me-1"></i>Registrar Reparaciones Efectuadas</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="small text-muted mb-2">Orden: <strong th:text="${o.numeroOrden}">OT</strong> - Placa: <strong th:text="${o.vehiculoPlaca}">ABC-123</strong></p>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Procedimientos y Labores Realizadas</label>
+                                    <textarea name="reparacionesEfectuadas" class="form-control" rows="4" required th:text="${o.reparacionesEfectuadas}" placeholder="Detalle las correcciones, sustituciones, purgas, calibraciones..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-success fw-bold rounded-pill">Guardar Reparación</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: AGREGAR REPUESTO UTILIZADO -->
+            <div class="modal fade" th:id="'modalRepuesto_' + ${o.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{'/web/mecanico/ordenes/' + ${o.id} + '/repuestos'}" method="post">
+                            <div class="modal-header bg-danger bg-opacity-10">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-boxes text-danger me-1"></i>Cargar Repuesto Utilizado</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Seleccionar Repuesto del Catálogo</label>
+                                    <select name="repuestoCodigo" class="form-select" required>
+                                        <option value="" disabled selected>Seleccione repuesto...</option>
+                                        <option th:each="r : ${catalogoRepuestos}" th:value="${r.codigo}"
+                                                th:text="${r.codigo} + ' - ' + ${r.nombre} + ' ($' + ${#numbers.formatDecimal(r.precioVenta, 0, 'COMMA', 0, 'POINT')} + ') Stock: ' + ${r.stockActual}"></option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Cantidad Utilizada</label>
+                                    <input type="number" name="cantidad" class="form-control" value="1" min="1" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-danger fw-bold rounded-pill">Agregar a Orden</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: CARGAR TIEMPO DE SERVICIO -->
+            <div class="modal fade" th:id="'modalTiempo_' + ${o.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form th:action="@{'/web/mecanico/ordenes/' + ${o.id} + '/tiempos'}" method="post">
+                            <div class="modal-header bg-info bg-opacity-10">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history text-info me-1"></i>Registrar Tiempos de Servicio</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Nombre del Mecánico</label>
+                                    <input type="text" name="mecanicoNombre" class="form-control" th:value="${o.mecanicoNombre != null ? o.mecanicoNombre : 'Carlos Mecánico'}" required>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold">Horas</label>
+                                        <input type="number" name="horas" class="form-control" value="1" min="0" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold">Minutos</label>
+                                        <input type="number" name="minutos" class="form-control" value="30" min="0" max="59" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Descripción de la Tarea</label>
+                                    <input type="text" name="descripcionTarea" class="form-control" placeholder="Ej: Desmontaje y montaje de mordazas" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-sm btn-info fw-bold rounded-pill">Registrar Horas</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-12 text-center text-muted py-5" th:if="${#lists.isEmpty(ordenes)}">
+            <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+            <h5>No hay órdenes en este estado.</h5>
+            <p class="small">Selecciona "Todas" en los filtros o genera nuevas órdenes desde las cotizaciones de clientes.</p>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>

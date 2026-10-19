@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: autotrace-taller-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: MONGODB_URI
+        sync: false # Configurar en el Dashboard de Render con tu cadena de MongoDB Atlas

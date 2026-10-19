@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Certificado Oficial de Calidad')}">
+    <title>AutoTrace - Certificado de Calidad</title>
+</head>
+<body class="bg-light">
+
+<header th:replace="~{fragments/layout :: navbar('auditor')}"></header>
+
+<main class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
+        <a th:href="@{/web/auditor}" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Volver al Panel
+        </a>
+        <button onclick="window.print()" class="btn btn-primary rounded-pill fw-semibold">
+            <i class="bi bi-printer me-1"></i> Imprimir Certificado Oficial
+        </button>
+    </div>
+
+    <!-- CERTIFICADO OFICIAL DOCUMENTO -->
+    <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white position-relative overflow-hidden" style="border-top: 10px solid #4f46e5 !important;">
+        
+        <!-- Marca de agua decorativa -->
+        <div class="position-absolute end-0 top-0 opacity-10 p-4" style="pointer-events: none;">
+            <i class="bi bi-patch-check-fill" style="font-size: 15rem; color: #4f46e5;"></i>
+        </div>
+
+        <div class="row align-items-center mb-4 border-bottom pb-4">
+            <div class="col-sm-8">
+                <span class="badge px-3 py-2 rounded-pill text-uppercase mb-2 text-white" style="background-color: #4f46e5; letter-spacing: 0.1em;">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Certificado Oficial de Calidad & Trazabilidad
+                </span>
+                <h2 class="fw-bold mb-1 brand-font text-dark">AutoTrace Enterprise</h2>
+                <p class="text-muted small mb-0">Sistema de Control de Calidad Vehicular y Trazabilidad de Servicios Automotrices · Norma ISO 9001:2015</p>
+            </div>
+            <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
+                <div class="border rounded-3 p-2 d-inline-block bg-light text-center">
+                    <small class="text-muted d-block font-monospace">CÓDIGO DE CERTIFICACIÓN</small>
+                    <strong class="fs-5 text-primary" th:text="${cert.codigoCertificado}">CERT-0000</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dictamen Principal -->
+        <div class="alert text-center py-3 mb-4 rounded-3"
+             th:classappend="${cert.resultado.name() == 'APROBADO' ? 'alert-success border-success' : 'alert-warning border-warning'}">
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-check-circle-fill me-2" th:if="${cert.resultado.name() == 'APROBADO'}"></i>
+                <span th:text="'DICTAMEN DE AUDITORÍA: ' + ${cert.resultado}">DICTAMEN</span>
+            </h4>
+            <p class="mb-0 small" th:text="'Puntaje de Conformidad Técnica: ' + ${cert.puntajeCalidad} + '% según estándares internacionales y protocolos de seguridad.'"></p>
+        </div>
+
+        <!-- Datos del Servicio y Vehículo -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="bg-light p-3 rounded-3 h-100">
+                    <h6 class="fw-bold text-secondary border-bottom pb-2 mb-2"><i class="bi bi-car-front text-primary me-1"></i>Datos del Vehículo Intervenido</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="py-1"><strong>Placa Identificadora:</strong> <span class="badge bg-dark fs-6" th:text="${cert.vehiculoPlaca}">ABC-123</span></li>
+                        <li class="py-1" th:if="${orden != null}"><strong>Vehículo / Modelo:</strong> <span th:text="${orden.vehiculoMarcaModelo}">Mazda 3</span></li>
+                        <li class="py-1" th:if="${orden != null}"><strong>Kilometraje al Servicio:</strong> <span th:text="${orden.kilometrajeIngreso} + ' km'">42,000 km</span></li>
+                        <li class="py-1"><strong>Número de Orden de Trabajo:</strong> <span th:text="${cert.numeroOrden}">OT-001</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="bg-light p-3 rounded-3 h-100">
+                    <h6 class="fw-bold text-secondary border-bottom pb-2 mb-2"><i class="bi bi-person-check text-success me-1"></i>Equipo Responsable y Fechas</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="py-1"><strong>Mecánico Técnico Ejecutor:</strong> <span th:text="${cert.mecanicoNombre}">Carlos Mecánico</span></li>
+                        <li class="py-1"><strong>Auditor / Certificador Oficial:</strong> <span th:text="${cert.auditorNombre}">Ing. Laura Auditora</span></li>
+                        <li class="py-1"><strong>Fecha y Hora de Emisión:</strong> <span th:text="${#temporals.format(cert.fechaCertificacion, 'dd/MM/yyyy HH:mm:ss')}">01/01/2026 10:00:00</span></li>
+                        <li class="py-1"><strong>Estado del Servicio:</strong> <span class="badge bg-success">Completado y Certificado</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalle de Checklist Evaluado -->
+        <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-list-check text-primary me-1"></i>Verificación de Cumplimiento de Normas de Calidad & Seguridad</h6>
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 35%;">Norma / Estándar Evaluado</th>
+                        <th style="width: 45%;">Descripción del Criterio Técnico</th>
+                        <th style="width: 20%;" class="text-center">Resultado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="chk : ${cert.checklist}">
+                        <td class="fw-bold small" th:text="${chk.norma}">Norma</td>
+                        <td class="small text-muted" th:text="${chk.descripcion}">Descripción</td>
+                        <td class="text-center">
+                            <span th:if="${chk.cumplido}" class="badge bg-success">
+                                <i class="bi bi-check2"></i> CONFORME
+                            </span>
+                            <span th:unless="${chk.cumplido}" class="badge bg-danger">
+                                NO CONFORME
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Observaciones y Trazabilidad Criptográfica -->
+        <div class="border rounded-3 p-3 bg-light mb-4">
+            <strong class="d-block small text-secondary mb-1">Dictamen y Observaciones del Certificador:</strong>
+            <p class="small text-dark mb-2" th:text="${cert.observacionesAuditor != null ? cert.observacionesAuditor : 'Servicio ejecutado con excelencia técnica conforme a los lineamientos de seguridad automotriz.'}"></p>
+            
+            <div class="pt-2 border-top">
+                <strong class="d-block small text-muted font-monospace">FIRMA DIGITAL & HASH DE TRAZABILIDAD (SHA-256):</strong>
+                <code class="text-primary small font-monospace d-block text-break" th:text="${cert.hashTrazabilidad}">hash</code>
+            </div>
+        </div>
+
+        <!-- Firmas -->
+        <div class="row pt-4 mt-2 text-center text-muted small">
+            <div class="col-6">
+                <div class="border-top pt-2 mx-auto" style="max-width: 250px;">
+                    <strong class="d-block text-dark" th:text="${cert.mecanicoNombre}">Carlos Mecánico</strong>
+                    Técnico Especialista Responsable
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border-top pt-2 mx-auto" style="max-width: 250px;">
+                    <strong class="d-block text-dark" th:text="${cert.auditorNombre}">Ing. Laura Auditora</strong>
+                    Auditor / Certificador de Calidad ISO
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+</body>
+</html>
