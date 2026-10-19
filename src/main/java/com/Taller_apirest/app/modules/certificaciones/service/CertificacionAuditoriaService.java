@@ -25,7 +25,7 @@ public class CertificacionAuditoriaService {
     private final OrdenTrabajoService ordenTrabajoService;
 
     public CertificacionAuditoriaService(CertificacionAuditoriaRepository certificacionRepository,
-                                         OrdenTrabajoService ordenTrabajoService) {
+            OrdenTrabajoService ordenTrabajoService) {
         this.certificacionRepository = certificacionRepository;
         this.ordenTrabajoService = ordenTrabajoService;
     }
@@ -77,15 +77,15 @@ public class CertificacionAuditoriaService {
                 certificacion.getVehiculoPlaca(),
                 certificacion.getMecanicoNombre(),
                 certificacion.getAuditorNombre(),
-                certificacion.getFechaCertificacion().toString()
-        );
+                certificacion.getFechaCertificacion().toString());
         certificacion.setHashTrazabilidad(hash);
 
         // Guardar certificado
         CertificacionAuditoria guardado = certificacionRepository.save(certificacion);
 
         // Si fue aprobada la auditoría, actualizar la orden de trabajo a CERTIFICADA
-        if (certificacion.getOrdenTrabajoId() != null && certificacion.getResultado() != ResultadoAuditoria.NO_CONFORME) {
+        if (certificacion.getOrdenTrabajoId() != null
+                && certificacion.getResultado() != ResultadoAuditoria.NO_CONFORME) {
             ordenTrabajoService.cambiarEstado(certificacion.getOrdenTrabajoId(), EstadoOrden.CERTIFICADA);
         }
 
@@ -94,16 +94,28 @@ public class CertificacionAuditoriaService {
 
     public List<ItemChecklist> generarChecklistEstandar() {
         List<ItemChecklist> lista = new ArrayList<>();
-        lista.add(new ItemChecklist("ISO-9001: Calidad de Procedimiento", "Verificación del cumplimiento de la orden de servicio según manual de fabricante", true, "Protocolo verificado conforme"));
-        lista.add(new ItemChecklist("Seguridad Vial: Frenos y Dirección", "Inspección de efectividad de frenado, discos, pastillas y alineación", true, "Presión y desgaste en tolerancias"));
-        lista.add(new ItemChecklist("Control de Fluidos y Estanqueidad", "Validación de nivel y ausencia de fugas de aceite, refrigerante y líquido de frenos", true, "Niveles nominales sin fugas"));
-        lista.add(new ItemChecklist("Torque y Ajustes Estructurales", "Comprobación de torque especificado en pernos de rueda y suspensión con torquímetro calibrado", true, "Torqueado a 110 Nm"));
-        lista.add(new ItemChecklist("Diagnóstico Electrónico OBD-II", "Escaneo computarizado final sin códigos de avería (DTCs activos)", true, "0 códigos de falla"));
-        lista.add(new ItemChecklist("Prueba de Ruta y Seguridad Activa", "Verificación en prueba dinámica de estabilidad, ruidos anómalos y respuesta del motor", true, "Comportamiento dinámico óptimo"));
+        lista.add(new ItemChecklist("ISO-9001: Calidad de Procedimiento",
+                "Verificación del cumplimiento de la orden de servicio según manual de fabricante", true,
+                "Protocolo verificado conforme"));
+        lista.add(new ItemChecklist("Seguridad Vial: Frenos y Dirección",
+                "Inspección de efectividad de frenado, discos, pastillas y alineación", true,
+                "Presión y desgaste en tolerancias"));
+        lista.add(new ItemChecklist("Control de Fluidos y Estanqueidad",
+                "Validación de nivel y ausencia de fugas de aceite, refrigerante y líquido de frenos", true,
+                "Niveles nominales sin fugas"));
+        lista.add(new ItemChecklist("Torque y Ajustes Estructurales",
+                "Comprobación de torque especificado en pernos de rueda y suspensión con torquímetro calibrado", true,
+                "Torqueado a 110 Nm"));
+        lista.add(new ItemChecklist("Diagnóstico Electrónico OBD-II",
+                "Escaneo computarizado final sin códigos de avería (DTCs activos)", true, "0 códigos de falla"));
+        lista.add(new ItemChecklist("Prueba de Ruta y Seguridad Activa",
+                "Verificación en prueba dinámica de estabilidad, ruidos anómalos y respuesta del motor", true,
+                "Comportamiento dinámico óptimo"));
         return lista;
     }
 
-    private String generarHashTrazabilidad(String ordenId, String placa, String mecanico, String auditor, String fecha) {
+    private String generarHashTrazabilidad(String ordenId, String placa, String mecanico, String auditor,
+            String fecha) {
         try {
             String raw = ordenId + "|" + placa + "|" + mecanico + "|" + auditor + "|" + fecha + "|" + UUID.randomUUID();
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -111,7 +123,8 @@ public class CertificacionAuditoriaService {
             StringBuilder hexString = new StringBuilder();
             for (byte b : encodedhash) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1)
+                    hexString.append('0');
                 hexString.append(hex);
             }
             return hexString.toString();

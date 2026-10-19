@@ -1,6 +1,9 @@
 package com.Taller_apirest.app.config;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +18,9 @@ import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
  */
 @Configuration
 public class MongoMultiDatabaseConfig {
+
+    @Value("${spring.data.mongodb.uri}")
+    private String mongoUri;
 
     @Value("${database.admin.name:taller_admin_db}")
     private String adminDbName;
@@ -31,8 +37,23 @@ public class MongoMultiDatabaseConfig {
     @Value("${database.certificaciones.name:taller_certificaciones_db}")
     private String certificacionesDbName;
 
-    // --- 1. Módulo Administrador ---
+    /**
+     * Crea un MongoClient compartido basado en la URI configurada.
+     * Spring Boot auto-configura este bean, pero lo definimos explícitamente
+     * para garantizar que todos los módulos usen la misma conexión.
+     */
     @Bean
+    @Primary
+    public MongoClient mongoClient() {
+        ConnectionString connectionString = new ConnectionString(mongoUri);
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .build();
+        return MongoClients.create(settings);
+    }
+
+    // --- 1. Módulo Administrador ---
+    @Bean(name = "adminMongoDbFactory")
     public MongoDatabaseFactory adminMongoDbFactory(MongoClient mongoClient) {
         return new SimpleMongoClientDatabaseFactory(mongoClient, adminDbName);
     }
@@ -43,7 +64,7 @@ public class MongoMultiDatabaseConfig {
     }
 
     // --- 2. Módulo Clientes y Vehículos ---
-    @Bean
+    @Bean(name = "vehiculosMongoDbFactory")
     public MongoDatabaseFactory vehiculosMongoDbFactory(MongoClient mongoClient) {
         return new SimpleMongoClientDatabaseFactory(mongoClient, vehiculosDbName);
     }
@@ -54,7 +75,7 @@ public class MongoMultiDatabaseConfig {
     }
 
     // --- 3. Módulo Órdenes de Trabajo y Servicios ---
-    @Bean
+    @Bean(name = "ordenesMongoDbFactory")
     public MongoDatabaseFactory ordenesMongoDbFactory(MongoClient mongoClient) {
         return new SimpleMongoClientDatabaseFactory(mongoClient, ordenesDbName);
     }
@@ -65,7 +86,7 @@ public class MongoMultiDatabaseConfig {
     }
 
     // --- 4. Módulo Proveedores y Reabastecimiento ---
-    @Bean
+    @Bean(name = "proveedoresMongoDbFactory")
     public MongoDatabaseFactory proveedoresMongoDbFactory(MongoClient mongoClient) {
         return new SimpleMongoClientDatabaseFactory(mongoClient, proveedoresDbName);
     }
@@ -76,7 +97,7 @@ public class MongoMultiDatabaseConfig {
     }
 
     // --- 5. Módulo Certificaciones y Auditoría ---
-    @Bean
+    @Bean(name = "certificacionesMongoDbFactory")
     public MongoDatabaseFactory certificacionesMongoDbFactory(MongoClient mongoClient) {
         return new SimpleMongoClientDatabaseFactory(mongoClient, certificacionesDbName);
     }
@@ -86,10 +107,10 @@ public class MongoMultiDatabaseConfig {
         return new MongoTemplate(certificacionesMongoDbFactory);
     }
 
-    // MongoTemplate primario para compatibilidad general si se inyecta sin calificador
-    @Bean
+    // MongoTemplate primario para compatibilidad general
+    @Bean(name = "mongoTemplate")
     @Primary
-    public MongoTemplate mongoTemplate(MongoDatabaseFactory adminMongoDbFactory) {
+    public MongoTemplate mongoTemplate(@org.springframework.beans.factory.annotation.Qualifier("adminMongoDbFactory") MongoDatabaseFactory adminMongoDbFactory) {
         return new MongoTemplate(adminMongoDbFactory);
     }
 }
