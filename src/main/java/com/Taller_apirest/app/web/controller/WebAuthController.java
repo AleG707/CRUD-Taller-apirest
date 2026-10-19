@@ -3,6 +3,8 @@ package com.Taller_apirest.app.web.controller;
 import com.Taller_apirest.app.modules.admin.model.Rol;
 import com.Taller_apirest.app.modules.admin.model.Usuario;
 import com.Taller_apirest.app.modules.admin.service.UsuarioService;
+import com.Taller_apirest.app.modules.vehiculos.model.Cliente;
+import com.Taller_apirest.app.modules.vehiculos.service.ClienteService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,9 +25,11 @@ public class WebAuthController {
     public static final String SESSION_USUARIO = "usuarioLogueado";
 
     private final UsuarioService usuarioService;
+    private final ClienteService clienteService;
 
-    public WebAuthController(UsuarioService usuarioService) {
+    public WebAuthController(UsuarioService usuarioService, ClienteService clienteService) {
         this.usuarioService = usuarioService;
+        this.clienteService = clienteService;
     }
 
     // ─── GET /login ────────────────────────────────────────────────────────────
@@ -137,6 +141,23 @@ public class WebAuthController {
         nuevo.setRol(rol);
         nuevo.setActivo(true);
         usuarioService.guardar(nuevo);
+
+        // Si se registra como CLIENTE, sincronizar también en taller_clientes_db
+        if (rol == Rol.CLIENTE) {
+            try {
+                if (clienteService.buscarPorEmail(emailNorm).isEmpty()) {
+                    Cliente cli = new Cliente();
+                    cli.setNombreCompleto(nombre.trim());
+                    cli.setEmail(emailNorm);
+                    cli.setTelefono(telefono.trim());
+                    cli.setIdentificacion("CC-" + System.currentTimeMillis() % 100000000);
+                    cli.setDireccion("No especificada");
+                    clienteService.guardar(cli);
+                }
+            } catch (Exception ignored) {
+                // Si la base de datos de clientes no está disponible o falla, el usuario ya quedó registrado
+            }
+        }
 
         redirectAttributes.addFlashAttribute("mensajeExito",
                 "¡Registro exitoso! Bienvenido/a, " + nombre.split(" ")[0] + ". Inicia sesión con tus credenciales.");
