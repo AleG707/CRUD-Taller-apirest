@@ -37,15 +37,24 @@ public class MongoMultiDatabaseConfig {
     @Value("${database.certificaciones.name:taller_certificaciones_db}")
     private String certificacionesDbName;
 
+    private static final String DEFAULT_MONGO_URI = "mongodb+srv://lalejandrogonzalez_db_user:Luis949@cluster0.bohd9jp.mongodb.net/db?retryWrites=true&w=majority&appName=Cluster0";
+
     /**
      * Crea un MongoClient compartido basado en la URI configurada.
-     * Spring Boot auto-configura este bean, pero lo definimos explícitamente
-     * para garantizar que todos los módulos usen la misma conexión.
+     * Sanitiza posibles comillas o valores vacíos provenientes de variables de entorno de Render.
      */
     @Bean
     @Primary
     public MongoClient mongoClient() {
-        ConnectionString connectionString = new ConnectionString(mongoUri);
+        String uri = (mongoUri != null && !mongoUri.trim().isEmpty()) ? mongoUri.trim() : DEFAULT_MONGO_URI;
+        if ((uri.startsWith("\"") && uri.endsWith("\"")) || (uri.startsWith("'") && uri.endsWith("'"))) {
+            uri = uri.substring(1, uri.length() - 1).trim();
+        }
+        if (uri.isEmpty()) {
+            uri = DEFAULT_MONGO_URI;
+        }
+
+        ConnectionString connectionString = new ConnectionString(uri);
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(connectionString)
                 .build();

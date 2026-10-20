@@ -42,6 +42,8 @@ public class WebDashboardController {
         this.cotizacionService = cotizacionService;
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(WebDashboardController.class);
+
     @GetMapping("/")
     public String index(Model model) {
         try {
@@ -57,8 +59,8 @@ public class WebDashboardController {
             model.addAttribute("ultimasOrdenes", ordenTrabajoService.listarTodas().stream().limit(5).toList());
             model.addAttribute("ultimasCertificaciones", certificacionService.listarTodas().stream().limit(5).toList());
         } catch (Exception e) {
-            // Si la base de datos está iniciando o no hay conexión aún
-            model.addAttribute("dbWarning", "La base de datos MongoDB está inicializándose o esperando conexión.");
+            log.error("Error al cargar datos del dashboard desde MongoDB: ", e);
+            model.addAttribute("dbWarning", "La base de datos MongoDB está esperando conexión (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
         }
         return "index";
     }

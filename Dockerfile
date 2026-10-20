@@ -26,5 +26,5 @@ COPY --from=build /app/target/*.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
-# Comando de inicio del microservicio
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+# Comando de inicio del microservicio con forzado IPv4 para resolucion DNS con MongoDB Atlas
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-Djava.net.preferIPv4Stack=true", "-jar", "app.jar"]
